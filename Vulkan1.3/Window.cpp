@@ -3,6 +3,7 @@
 #include "StaticMesh.h"
 #include "MeshManager.h"
 #include "SceneManager.h"
+#include "CameraComponent.h"
 
 std::vector<char> Window::ReadFile(const std::string& Filename)
 {
@@ -32,8 +33,35 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Window::VulkanDebugCallback(VkDebugUtilsMessageSe
 
 void Window::FramebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
-    auto app = reinterpret_cast<Window*>(glfwGetWindowUserPointer(Statics::MainWindow->GlfwWindow));
+    auto app = reinterpret_cast<Window*>(glfwGetWindowUserPointer(window));
     app->FramebufferResized = true;
+}
+
+void Window::KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if (action == GLFW_PRESS)
+        Statics::Keymap[key] = true;
+    else if (action == GLFW_RELEASE)
+        Statics::Keymap[key] = false;
+
+    if (IsValid(Statics::ActiveCamera))
+        Statics::ActiveCamera->UpdateTranslationFromKeyboard();
+
+    for (auto& key : Statics::Keymap)
+    {
+        if (key.second == true)
+        {
+            if (key.first == GLFW_KEY_ESCAPE)
+            {
+                glfwSetWindowShouldClose(window, true);
+                key.second = false;
+            }
+        }
+    }
+}
+
+void Window::CursorCallback(GLFWwindow* window, double xpos, double ypos)
+{
 }
 
 int Window::Cleanup()
@@ -101,6 +129,8 @@ void Window::Init()
     GlfwWindow = glfwCreateWindow(WINDOW_WIDTH_DEFAULT, WINDOW_HEIGHT_DEFAULT, "Vulkan GlfwWindow", nullptr, nullptr);
     glfwSetWindowUserPointer(GlfwWindow, this);
     glfwSetFramebufferSizeCallback(GlfwWindow, FramebufferResizeCallback);
+    glfwSetKeyCallback(GlfwWindow, KeyCallback);
+    glfwSetCursorPosCallback(GlfwWindow, CursorCallback);
 
     CreateVulkanInstance();
     CreateSurface();

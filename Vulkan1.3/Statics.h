@@ -31,15 +31,26 @@
 #include <optional>
 #include <set>
 #include <array>
+#include <map>
 
 // Local
 #include "Utility.h"
 
+using KEYMAP = std::map<int, bool>;
+
 class Statics
 {
 public:
+	static void UpdateDeltaTime();
+
 	static class Window* MainWindow;
 	static class SceneManager* SceneManager;
 	static class MeshManager* MeshManager;
+	static class CameraComponent* ActiveCamera;
+	static KEYMAP Keymap;
+	static float DeltaTime;
+
+private:
+	static double LastTime;
 };
 #endif

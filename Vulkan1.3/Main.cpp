@@ -2,6 +2,7 @@
 #include "Window.h"
 #include "SceneManager.h"
 #include "MeshManager.h"
+#include "CameraComponent.h"
 
 void Draw();
 
@@ -9,6 +10,10 @@ int main()
 {
     Window& window = Statics::MainWindow->Get();
     window.Init();
+
+    CameraComponent SceneCamera{};
+    SceneCamera.Position = { 0.0f, 2.0f, 2.0f };
+    Statics::ActiveCamera = &SceneCamera;
 
     Statics::MeshManager->CreatePrimitives();
 
@@ -20,6 +25,7 @@ int main()
         Statics::SceneManager->Start();
         Statics::SceneManager->Update();
         Draw();
+        Statics::UpdateDeltaTime();
     }
 
     return window.Cleanup();

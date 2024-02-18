@@ -34,6 +34,8 @@ public:
 	static std::vector<char> ReadFile(const std::string& Filename);
 	static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
+	static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+	static void CursorCallback(GLFWwindow* window, double xpos, double ypos);
 
 	int Cleanup();
 	void CleanupSwapChain();

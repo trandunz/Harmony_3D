@@ -8,6 +8,11 @@ inline static bool IsValid(T* Object)
 	return Object != nullptr;
 }
 
+inline static void PrintToConsole(const char* Message)
+{
+	std::cout << Message << std::endl;
+}
+
 #endif
 
 

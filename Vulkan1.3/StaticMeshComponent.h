@@ -1,10 +1,10 @@
 #pragma once
-#ifndef _STATICMESHCOMPONENT_H
-#define _STATICMESHCOMPONENT_H
+#ifndef _STATICMESH_COMPONENT_H
+#define _STATICMESH_COMPONENT_H
 
-#include "Transform.h"
+#include "TransformComponent.h"
 
-class StaticMeshComponent
+class StaticMeshComponent : public TransformComponent
 {
 public:
 	StaticMeshComponent() {};
@@ -15,7 +15,6 @@ public:
 	void Draw();
 
 protected:
-	Transform Transform{};
 	class StaticMesh* AssignedStaticMesh{ nullptr };
 };
 #endif

@@ -1,6 +1,7 @@
 #include "StaticMeshComponent.h"
 #include "StaticMesh.h"
 #include "Window.h"
+#include "CameraComponent.h"
 
 StaticMeshComponent::StaticMeshComponent(StaticMesh* StaticMesh)
 {
@@ -15,9 +16,9 @@ void StaticMeshComponent::UpdateUniformBuffer(uint32_t currentImage)
     Window* MainWindow = Statics::MainWindow;
 
     UniformBufferObject ubo{};
-    ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    ubo.proj = glm::perspective(glm::radians(45.0f), MainWindow->VulkanSwapChainExtent.width / (float)MainWindow->VulkanSwapChainExtent.height, 0.1f, 10.0f);
+    ubo.model = GetTransformMatrix();
+    ubo.view = Statics::ActiveCamera->GetViewMatrix();
+    ubo.proj = Statics::ActiveCamera->GetProjectionMatrix();
     ubo.proj[1][1] *= -1;
 
     memcpy(AssignedStaticMesh->UniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
