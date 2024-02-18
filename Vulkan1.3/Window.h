@@ -31,7 +31,7 @@ public:
 		static Window Instance;
 		return Instance;
 	}
-	static std::vector<char> ReadFile(const std::string& filename);
+	static std::vector<char> ReadFile(const std::string& Filename);
 	static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 	static void FramebufferResizeCallback(GLFWwindow* window, int width, int height);
 
@@ -51,12 +51,19 @@ public:
 	void PickPhysicalDevice();
 	void CreateLogicalDevice();
 	void CreateSwapChain();
-	void recreateSwapChain();
+	void RecreateSwapChain();
 	void CreateImageViews();
 	void CreateRenderPass();
+	void CreateDescriptorSetLayout();
 	void CreateGraphicsPipeline();
 	void CreateFramebuffers();
 	void CreateCommandPool();
+
+	//
+	void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+	//
+
 	void CreateCommandBuffers();
 	void CreateSyncObjects();
 	void GrabExtensions();
@@ -83,7 +90,10 @@ public:
 
 	bool CheckValidationLayerSupport();
 
+	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
 	struct GLFWwindow* GlfwWindow{ nullptr };
+
 	VkInstance VulkanInstance{};
 	VkDebugUtilsMessengerEXT VulkanDebugMessenger;
 	VkSurfaceKHR VulkanSurface;
@@ -102,6 +112,7 @@ public:
 	std::vector<VkFramebuffer> VulkanSwapChainFramebuffers;
 
 	VkRenderPass VulkanRenderPass;
+	VkDescriptorSetLayout VulkanDescriptorSetLayout;
 	VkPipelineLayout VulkanPipelineLayout;
 	VkPipeline VulkanGraphicsPipeline;
 

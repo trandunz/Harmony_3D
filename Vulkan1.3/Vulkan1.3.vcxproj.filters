@@ -19,24 +19,84 @@
     <Filter Include="Source Files\Rendering">
       <UniqueIdentifier>{3ea75225-f48f-4619-afe6-88fa70b2a252}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\SceneManagement">
+      <UniqueIdentifier>{580da000-1d51-493e-896f-0cb0dbfae776}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SceneManagement">
+      <UniqueIdentifier>{602e16ed-b66d-4f35-b942-babdca999158}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Globals">
+      <UniqueIdentifier>{47d5ced8-d1cc-43ca-b87d-b33a050361fb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Globals">
+      <UniqueIdentifier>{310e6f05-e931-4bf6-893c-c902674c142b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Components">
+      <UniqueIdentifier>{170948b2-fa76-47d6-ae30-7798104a4d2d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Components">
+      <UniqueIdentifier>{0033412d-fde7-418d-a667-cb6128eeacd4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Statics.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Window.cpp">
       <Filter>Source Files\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="SceneManager.cpp">
+      <Filter>Source Files\SceneManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="Statics.cpp">
+      <Filter>Source Files\Globals</Filter>
+    </ClCompile>
+    <ClCompile Include="StaticMesh.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="StaticMeshComponent.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene_Demo.cpp">
+      <Filter>Source Files\SceneManagement</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshManager.cpp">
+      <Filter>Source Files\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Statics.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Window.h">
       <Filter>Header Files\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>Header Files\SceneManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneManager.h">
+      <Filter>Header Files\SceneManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="Statics.h">
+      <Filter>Header Files\Globals</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility.h">
+      <Filter>Header Files\Globals</Filter>
+    </ClInclude>
+    <ClInclude Include="StaticMesh.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="StaticMeshComponent.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene_Demo.h">
+      <Filter>Header Files\SceneManagement</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshManager.h">
+      <Filter>Header Files\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -44,6 +104,9 @@
       <Filter>Resource Files</Filter>
     </None>
     <None Include="Resources\09_shader_base.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Resources\shader_base_v2.vert">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

@@ -1,9 +1,12 @@
 #include "Window.h"
 #include "Statics.h"
+#include "StaticMesh.h"
+#include "MeshManager.h"
+#include "SceneManager.h"
 
-std::vector<char> Window::ReadFile(const std::string& filename)
+std::vector<char> Window::ReadFile(const std::string& Filename)
 {
-    std::ifstream file(filename, std::ios::ate | std::ios::binary);
+    std::ifstream file(Filename, std::ios::ate | std::ios::binary);
 
     if (!file.is_open()) {
         throw std::runtime_error("failed to open file!");
@@ -38,6 +41,12 @@ int Window::Cleanup()
     vkDeviceWaitIdle(VulkanDevice);
 
     CleanupSwapChain();
+
+    // Cleanup
+    Statics::SceneManager->Cleanup();
+    Statics::MeshManager->Cleanup();
+
+    vkDestroyDescriptorSetLayout(VulkanDevice, VulkanDescriptorSetLayout, nullptr);
 
     vkDestroyPipeline(VulkanDevice, VulkanGraphicsPipeline, nullptr);
     vkDestroyPipelineLayout(VulkanDevice, VulkanPipelineLayout, nullptr);
@@ -100,6 +109,7 @@ void Window::Init()
     CreateSwapChain();
     CreateImageViews();
     CreateRenderPass();
+    CreateDescriptorSetLayout();
     CreateGraphicsPipeline();
     CreateFramebuffers();
     CreateCommandPool();
@@ -116,7 +126,7 @@ void Window::Draw()
     VkResult result = vkAcquireNextImageKHR(VulkanDevice, VulkanSwapChain, UINT64_MAX, VulkanImageAvailableSemaphores[CurrentFrame], VK_NULL_HANDLE, &imageIndex);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-        recreateSwapChain();
+        RecreateSwapChain();
         return;
     }
     else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
@@ -164,7 +174,7 @@ void Window::Draw()
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || FramebufferResized) {
         FramebufferResized = false;
-        recreateSwapChain();
+        RecreateSwapChain();
     }
     else if (result != VK_SUCCESS) {
         throw std::runtime_error("failed to present swap chain image!");
@@ -384,7 +394,7 @@ void Window::CreateSwapChain()
     VulkanSwapChainExtent = extent;
 }
 
-void Window::recreateSwapChain()
+void Window::RecreateSwapChain()
 {
     int width = 0, height = 0;
     glfwGetFramebufferSize(GlfwWindow, &width, &height);
@@ -471,9 +481,28 @@ void Window::CreateRenderPass()
     }
 }
 
+void Window::CreateDescriptorSetLayout()
+{
+    VkDescriptorSetLayoutBinding uboLayoutBinding{};
+    uboLayoutBinding.binding = 0;
+    uboLayoutBinding.descriptorCount = 1;
+    uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uboLayoutBinding.pImmutableSamplers = nullptr;
+    uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+    VkDescriptorSetLayoutCreateInfo layoutInfo{};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = 1;
+    layoutInfo.pBindings = &uboLayoutBinding;
+
+    if (vkCreateDescriptorSetLayout(VulkanDevice, &layoutInfo, nullptr, &VulkanDescriptorSetLayout) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create descriptor set layout!");
+    }
+}
+
 void Window::CreateGraphicsPipeline()
 {
-    auto vertShaderCode = ReadFile("Resources/09_shader_base.vert");
+    auto vertShaderCode = ReadFile("Resources/shader_base_v2.vert");
     auto fragShaderCode = ReadFile("Resources/09_shader_base.frag");
 
     VkShaderModule vertShaderModule = CreateShaderModule(vertShaderCode);
@@ -495,8 +524,14 @@ void Window::CreateGraphicsPipeline()
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 0;
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
+
+    auto bindingDescription = Vertex::GetBindingDescription();
+    auto attributeDescriptions = Vertex::GetAttributeDescriptions();
+
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
+    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -515,7 +550,7 @@ void Window::CreateGraphicsPipeline()
     rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
 
     VkPipelineMultisampleStateCreateInfo multisampling{};
@@ -549,8 +584,9 @@ void Window::CreateGraphicsPipeline()
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount = 0;
+    pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pushConstantRangeCount = 0;
+    pipelineLayoutInfo.pSetLayouts = &VulkanDescriptorSetLayout;
 
     if (vkCreatePipelineLayout(VulkanDevice, &pipelineLayoutInfo, nullptr, &VulkanPipelineLayout) != VK_SUCCESS) {
         throw std::runtime_error("failed to create pipeline layout!");
@@ -616,6 +652,67 @@ void Window::CreateCommandPool()
     if (vkCreateCommandPool(VulkanDevice, &poolInfo, nullptr, &VulkanCommandPool) != VK_SUCCESS) {
         throw std::runtime_error("failed to create command pool!");
     }
+}
+
+void Window::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+{
+    VkBufferCreateInfo bufferInfo{};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = size;
+    bufferInfo.usage = usage;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateBuffer(VulkanDevice, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create buffer!");
+    }
+
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(VulkanDevice, buffer, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
+
+    if (vkAllocateMemory(VulkanDevice, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate buffer memory!");
+    }
+
+    vkBindBufferMemory(VulkanDevice, buffer, bufferMemory, 0);
+}
+
+void Window::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+{
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandPool = VulkanCommandPool;
+    allocInfo.commandBufferCount = 1;
+
+    VkCommandBuffer commandBuffer;
+    vkAllocateCommandBuffers(VulkanDevice, &allocInfo, &commandBuffer);
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+    VkBufferCopy copyRegion{};
+    copyRegion.size = size;
+    vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+    vkEndCommandBuffer(commandBuffer);
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+
+    vkQueueSubmit(VulkanGraphicsQueue, 1, & submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(VulkanGraphicsQueue);
+
+    vkFreeCommandBuffers(VulkanDevice, VulkanCommandPool, 1, &commandBuffer);
 }
 
 void Window::CreateCommandBuffers()
@@ -700,7 +797,8 @@ void Window::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIn
     scissor.extent = VulkanSwapChainExtent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+    // Render Meshes
+    Statics::SceneManager->Draw();
 
     vkCmdEndRenderPass(commandBuffer);
 
@@ -896,6 +994,20 @@ bool Window::CheckValidationLayerSupport()
     }
 
     return true;
+}
+
+uint32_t Window::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+{
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(VulkanPhysicalDevice, &memProperties);
+
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+
+    throw std::runtime_error("failed to find suitable memory type!");
 }
 
 bool QueueFamilyIndices::IsComplete()
